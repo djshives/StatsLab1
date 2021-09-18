@@ -1,0 +1,169 @@
+---
+title: "Lab2"
+author: "Drew Shives"
+date: "9/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("tidyverse")
+```
+
+1. Use R to demonstrate that the mean minimizes the sum of the squared deviations from the mean. Accomplish the following steps:
+
+a) Produce a sample of at least 10 or more different numbers
+
+```{r}
+x <- sample(100, 10)
+x
+```
+
+b) Produce a simulation following the example from the concepts section
+
+```{r}
+scores <- x
+sequence <- 1:max(scores)
+
+sum_deviations <- function(scores, sequence) {
+  sum_dev <- c()
+  for(i in 1:length(sequence)) {
+    sum_dev[i] <- sum((scores - sequence[i]) ^ 2)
+  }
+  return(sum_dev)
+}
+
+sum_devs <- sum_deviations(scores, sequence)
+sum_devs
+```
+
+c) Use your simulation to test a range of numbers smaller and larger than the mean to show that the mean minimizes the sum of the squared deviations from the mean.
+
+```{r}
+below <- 1:(mean(x) - 1)
+above <- (mean(x) + 1):100
+
+cat("\n# Below the mean \n")
+sum_deviations(scores, below)
+cat("\n# Mean \n")
+sum_deviations(scores, mean(scores))
+cat("\n# Above the mean \n")
+sum_deviations(scores, above)
+```
+
+d) Plot your results.
+
+```{r}
+sum_devs_data <- tibble(sum_devs)
+sum_devs_data$sequence <- as.numeric(row.names(sum_devs_data))
+
+ggplot(sum_devs_data) +
+  geom_point(mapping = aes(x = sequence, y = sum_devs)) +
+  geom_text(data = rbind(sum_devs_data[which.min(sum_devs_data$sum_devs), ]), mapping = aes(x = sequence, y = sum_devs), label = min(sum_devs_data$sum_devs), vjust = -1)
+```
+
+2. Write a custom R function for any one of the following descriptive statistics: median, mode, standard deviation, variance. Demonstrate that it produces the same value as the base R function given some set of numbers.
+
+```{r}
+std_dev <- function(scores) {
+  return(sqrt(sum((scores - mean(scores)) ^ 2) / (length(scores) - 1)))
+}
+
+cat("\n Custom function \n")
+std_dev(x)
+cat("\n R function \n")
+sd(x)
+```
+
+3. Imagine the same instructor taught a morning, afternoon, and evening section of the same course. And, the average scores for each section on a midterm were 85% for the morning, 90% for the afternoon, and 93% for the evening sections. Create a data.frame representing these means for each section. Then, use ggplot2 to plot the means as bar graph. (hint you will need one vector for the class sections, and one vector for the means. Then you can combine them into a data.frame before plotting them)
+
+```{r}
+midterm_averages <- tibble(
+  class_section = c("morning", "afternoon", "evening"),
+  average_score = c(0.85, 0.90, 0.93)
+)
+
+midterm_averages
+
+ggplot(data = midterm_averages, mapping = aes(x = class_section, y = average_score)) +
+  geom_col() +
+  geom_text(mapping = aes(label = sprintf("%1.0f%%", average_score * 100)), vjust = -0.2) +
+  scale_y_continuous(labels = scales::percent)
+```
+
+4. Imagine there were two instructors, and they each taught different sections in the morning, afternoon and evening. The midterm averages for instructor 1 were 75%, 78%, and 80% in the morning, afternoon, and evening. The midterm averages for instructor 2 were 88%, 76%, and 63% for the morning, afternoon, and evening. Create a data.frame representing the means, the time of day, and the instructors (three columns). Then plot data.frame using ggplot2 as a bar graph.
+
+```{r}
+midterm_averages2 <- tibble(
+  class_section = c("morning", "afternoon", "evening", "morning", "afternoon", "evening"),
+  instructor = c("instructor_1", "instructor_1", "instructor_1", "instructor_2", "instructor_2", "instructor_2"),
+  average_score = c(0.85, 0.90, 0.93, 0.88, 0.76, 0.63)
+)
+
+midterm_averages2
+
+ggplot(data = midterm_averages2, mapping = aes(x = class_section, y = average_score)) +
+  geom_col() +
+  facet_wrap(~ instructor) +
+  geom_text(mapping = aes(label = sprintf("%1.0f%%", average_score * 100)), vjust = -0.2) +
+  scale_y_continuous(labels = scales::percent)
+```
+
+5. Import the WHR2018.csv data file, containing measure from the World Happiness report from 2018. For the years 2010 to 2015, what was the mean “healthy life expectancy at birth” for each year (find the mean for each year across countries). Show your results in a table and in a graph using ggplot.
+
+```{r}
+df <- read.table("open_data/WHR2018.csv",
+                 sep = ",",
+                 header = TRUE)
+
+df <- tibble(df)
+
+df_grouped <- df %>%
+  group_by(year) %>%
+  summarise(
+    mean_life_expectancy = mean(Healthy.life.expectancy.at.birth, na.rm = TRUE)
+    ) %>%
+  filter(year >= 2010, year <= 2015)
+
+df_grouped
+
+ggplot(data = df_grouped, mapping = aes(x = year, y = mean_life_expectancy)) +
+  geom_point() +
+  geom_line() +
+  geom_text(mapping = aes(label = sprintf("%1.2f", mean_life_expectancy)), vjust = -3) +
+  ylim(61, 64)
+```
+
+6. Repeat the above, except in addition to calculating the mean for each year, also calculate the standard deviation for “healthy life expectancy at birth” for each year. Then, add error bars to your graph using the +1 and -1 standard deviations from the means for each year.
+
+```{r}
+df_grouped2 <- df %>%
+  group_by(year) %>%
+  summarise(
+    mean_life_expectancy = mean(Healthy.life.expectancy.at.birth, na.rm = TRUE),
+    std_dev_life_expectancy = sd(Healthy.life.expectancy.at.birth, na.rm = TRUE)
+    ) %>%
+  filter(year >= 2010, year <= 2015)
+
+df_grouped2
+
+ggplot(data = df_grouped2, mapping = aes(x = year, y = mean_life_expectancy)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(mapping = aes(ymin = mean_life_expectancy - std_dev_life_expectancy,
+                              ymax = mean_life_expectancy + std_dev_life_expectancy),
+                width = 0.25) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", mean_life_expectancy)), vjust = -2, hjust = -0.1) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", mean_life_expectancy - std_dev_life_expectancy)), vjust = 13, hjust = -0.1) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", mean_life_expectancy + std_dev_life_expectancy)), vjust = -12, hjust = -0.1)
+```
+
+
+
+
+
+
+
