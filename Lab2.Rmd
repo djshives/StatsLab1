@@ -161,8 +161,7 @@ ggplot(data = df_grouped2, mapping = aes(x = year, y = mean_life_expectancy)) +
   geom_text(mapping = aes(label = sprintf("%1.2f", mean_life_expectancy + std_dev_life_expectancy)), vjust = -12, hjust = -0.1)
 ```
 
-
-
+I was able to solve the problems without assistance.
 
 
 
