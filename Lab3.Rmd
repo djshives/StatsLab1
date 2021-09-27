@@ -9,5 +9,167 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library("tidyverse")
+```
 
 
+1) Create five samples of 25 observations from a normal distribution with mean 200, and standard deviation 100. Compute the mean of each sample, and plot the means in a graph using ggplot2.
+
+```{r}
+samples_matrix <- matrix(nrow = 5, ncol = 25)
+
+for(i in 1:5) {
+  samples_matrix[, 1:25] <- rnorm(n = 25, mean = 200, sd = 100)
+}
+
+data <- tibble(
+  Index = 1:5,
+  Means  = rowMeans(samples_matrix)
+  )
+
+samples_matrix
+data
+ggplot(data = data, mapping = aes(x = Index, y = Means)) +
+  geom_col() +
+  geom_text(mapping = aes(label = sprintf("%1.2f", Means), vjust = -0.5)
+  )
+```
+
+2) Additionally calculate the standard deviation of each sample from above. Use the standard deviations for error bars, and produce another graph with the means along with error bars using ggplot2.
+
+```{r}
+standard_deviation <- c()
+
+for(i in 1:5) {
+  standard_deviation[i] <- sqrt(sum((samples_matrix[i,] - mean(samples_matrix[i,])) ^ 2) / length(samples_matrix[i,]))
+}
+
+data <- add_column(.data = data, Std_Dev = standard_deviation, .after = "Means")
+
+data
+
+ggplot(data = data, mapping = aes(x = Index, y = Means)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(mapping = aes(ymin = Means - Std_Dev,
+                              ymax = Means + Std_Dev),
+                width = 0.25) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", Means)), vjust = 0, hjust = -0.1) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", Means - Std_Dev)), vjust = 8, hjust = -0.1) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", Means + Std_Dev)), vjust = -9, hjust = -0.1) +
+  ylim(0, 400) +
+  xlim(0, 6)
+```
+
+3) Demonstrate that the sample mean across a range of n, is an unbiased estimator of the population mean using a monte-carlo simulation.
+
+ - The population is a normal distribution with mean = 10, standard deviation = 5.
+ 
+```{r}
+population_ <- ggplot(data = tibble(x = c(-10, 35)), aes(x))+ 
+  stat_function(fun = dnorm, n = 10000, args = list(mean = 10, sd = 5)) + 
+  scale_y_continuous(breaks = NULL)
+
+population_
+```
+
+ - Test a variety of n (sample size), including n = 2, 5, 10, 50, and 100
+ 
+```{r}
+n_sizes <- c(2, 5, 10, 50, 100)
+
+n_sizes
+```
+ 
+ 
+ - For each sample size n, your task is to draw 10,000 samples of that size, then for each sample, calculate the sample mean. If the mean is unbiased, then we expect that “on average” the sample means will be the same as the population mean. To determine if this is true, compute the mean of the sample means that you produce to see if it is close to the population mean.
+ 
+```{r}
+matrices_list = list()
+total_data = data.frame()
+
+for(i in 1:length(n_sizes)) {
+  sample_matrix <- matrix(nrow = n_sizes[i], ncol = 10000)
+  for(j in 1:nrow(sample_matrix)) {
+    sample_matrix[j,] <- rnorm(n = 10000, mean = 10, sd = 5)
+  }
+  matrices_list[[i]] <-sample_matrix
+}
+
+for(i in 1:length(matrices_list)) {
+  samples_ <- data.frame(
+    matrix(unlist(matrices_list[[i]]),
+           nrow = length(matrices_list[[i]][, 1]),
+           byrow = TRUE
+           )
+      )
+  samples_ <- as_tibble(samples_)
+  samples_ <- add_column(.data = samples_, group = i, .before = "X1")
+  samples_ <- add_column(.data = samples_, n = 1:nrow(samples_), .after = "group")
+  samples_ <- add_column(.data = samples_, n_size = toString(length(matrices_list[[i]][, 1])), .after = "n")
+  total_data <- rbind(total_data, samples_)
+}
+
+grouped_data <- total_data %>%
+  mutate(n_means = rowMeans(
+    select(total_data, c(X1:X10000))
+  )) %>%
+  group_by(n_size) %>%
+  summarise(mean = mean(n_means)) %>%
+  slice(match(n_sizes, n_size))
+
+grouped_data
+```
+
+ - Show the mean of the sample means for each sample size.
+
+```{r}
+grouped_data
+
+ggplot(data = grouped_data, mapping = aes(x = factor(n_size, n_sizes), y = mean)) +
+  geom_col() +
+  labs(x = "n_size")
+
+ggplot(data = grouped_data, mapping = aes(x = factor(n_size, n_sizes), y = mean)) +
+  geom_col() +
+  labs(x = "n_size") +
+  #scale_y_continuous(breaks = round(seq(0, 10, by = 0.5) ,1), limits = c(0, 10))
+  coord_cartesian(ylim = c(9.75, 10.25)) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", mean)), vjust = -0.5)
+```
+
+4) Use a monte carlo simulation to compare the standard deviation formulas (divide by N vs N-1), and show that the N-1 formula is a better unbiased estimate of the population standard deviation, especially for small n.
+
+ - Use the same normal distribution and samples sizes from above.
+
+- Rather than computing the mean for each sample, compute both forms of the standard deviation formula, including the sample standard deviation that divides by N-1, and the regular standard deviation that divides by N.
+
+- You should have 10,000 samples for each sample size, and 10,000 standard deviations for each the sample and regular standard deviation. Your task is to find the average of each, for each sample-size.
+
+```{r}
+var_sd_data <- total_data %>%
+  mutate(row_means = rowMeans(
+    select(total_data, c(X1:X10000))
+  ), .after = "n_size") %>%
+  mutate(row_var_pop = (rowSums((
+    select(total_data, c(X1:X10000)) - row_means) ^ 2) / 10000
+  ), .after = "row_means") %>%
+  mutate(row_var_sample = apply(total_data, 1, var), .after = "row_var_pop") %>%
+  group_by(n_size) %>%
+  summarise(mean_var_pop = mean(row_var_pop),
+            mean_var_sample = mean(row_var_sample),
+            mean_std_dev_pop = sqrt(mean_var_pop),
+            mean_std_dev_sample = sqrt(mean_var_sample)) %>%
+  slice(match(n_sizes, n_size))
+
+var_sd_data
+```
+
+- Which of the standard deviations is more systematically biased? That is, which one is systematically worse at estimating the population standard deviation?
+
+The sample standard deviation is less systematically biased and is better at estimating the population standard deviation.
+
+
+
+I was able to solve all problems with minimal help (Stack Overflow for some syntactical stuff).
