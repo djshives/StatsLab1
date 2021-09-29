@@ -85,6 +85,8 @@ n_sizes
  
  - For each sample size n, your task is to draw 10,000 samples of that size, then for each sample, calculate the sample mean. If the mean is unbiased, then we expect that “on average” the sample means will be the same as the population mean. To determine if this is true, compute the mean of the sample means that you produce to see if it is close to the population mean.
  
+I had originally misinterpreted the question and sampled 10,000 samples n times (two 10,000 samples, five 10,000 samples, etc.). The first code chunk for each of the following bullets represents that. The second code chunks are for 10,000 samples of n times (10,000 samples of n = 2, 10,000 samples of n = 5, etc.).
+ 
 ```{r}
 matrices_list = list()
 total_data = data.frame()
@@ -122,6 +124,50 @@ grouped_data <- total_data %>%
 grouped_data
 ```
 
+```{r}
+samples_vector2 <- c()
+samples_matrix2 <- matrix()
+samples_2 <- data.frame()
+samples_tibble2 <- data.frame()
+
+
+for(i in n_sizes) {
+  samples_vector2 <- replicate(10000, rnorm(i, 10, 5))
+  samples_2 <- as_tibble(samples_vector2)
+  samples_2 <- add_column(.data = samples_2, group = toString(i), .before = "V1")
+  samples_2 <- add_column(.data = samples_2, n = 1:nrow(samples_2), .after = "group")
+  samples_tibble2 <- rbind(samples_tibble2, samples_2)
+
+}
+
+gathered_data2 <- samples_tibble2 %>% 
+  gather(sample_group, samples, -group, -n) %>%
+  arrange(group)
+  
+grouped_data2 <- gathered_data2 %>% 
+  group_by(group, sample_group) %>%
+  summarise(
+    mean = mean(samples),
+    var = var(samples)
+    )
+
+means_data2 <- gathered_data2 %>%
+  group_by(group) %>%
+  summarise(
+    group_mean = sum(samples) / length(group)
+  ) %>%
+  slice(match(n_sizes, group))
+
+means_data2
+
+grouped_data2$group <- factor(grouped_data2$group, levels = c(100, 50, 10, 5, 2))
+grouped_data2 %>% 
+  ggplot(mapping = aes(x = mean, fill = group)) + 
+  geom_histogram(bins = 50, alpha = 0.5)
+
+```
+
+
  - Show the mean of the sample means for each sample size.
 
 ```{r}
@@ -134,10 +180,24 @@ ggplot(data = grouped_data, mapping = aes(x = factor(n_size, n_sizes), y = mean)
 ggplot(data = grouped_data, mapping = aes(x = factor(n_size, n_sizes), y = mean)) +
   geom_col() +
   labs(x = "n_size") +
-  #scale_y_continuous(breaks = round(seq(0, 10, by = 0.5) ,1), limits = c(0, 10))
   coord_cartesian(ylim = c(9.75, 10.25)) +
   geom_text(mapping = aes(label = sprintf("%1.2f", mean)), vjust = -0.5)
 ```
+
+```{r}
+means_data2
+
+ggplot(data = means_data2, mapping = aes(x = factor(group, n_sizes), y = group_mean)) +
+  geom_col() +
+  labs(x = "n_size")
+
+ggplot(data = means_data2, mapping = aes(x = factor(group, n_sizes), y = group_mean)) +
+  geom_col() +
+  labs(x = "n_size") +
+  coord_cartesian(ylim = c(9.75, 10.25)) +
+  geom_text(mapping = aes(label = sprintf("%1.2f", group_mean)), vjust = -0.5)
+```
+
 
 4) Use a monte carlo simulation to compare the standard deviation formulas (divide by N vs N-1), and show that the N-1 formula is a better unbiased estimate of the population standard deviation, especially for small n.
 
@@ -165,6 +225,22 @@ var_sd_data <- total_data %>%
 
 var_sd_data
 ```
+
+```{r}
+var_sd_data2 <- gathered_data2 %>%
+  group_by(group) %>%
+  summarise(
+    group_mean = sum(samples) / length(group),
+    group_sample_var = var(samples),
+    group_sample_std_dev = sqrt(group_sample_var),
+    group_pop_var = sum((samples - group_mean) ^ 2) / length(group),
+    group_pop_std_dev = sqrt(group_pop_var)
+  ) %>%
+  slice(match(n_sizes, group))
+
+var_sd_data2
+```
+
 
 - Which of the standard deviations is more systematically biased? That is, which one is systematically worse at estimating the population standard deviation?
 
