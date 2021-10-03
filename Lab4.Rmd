@@ -1,0 +1,25 @@
+---
+title: "Lab4"
+author: "Drew Shives"
+date: "10/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+1) Estimate the letter occurrence probabilities of all 26 letters in English by measuring a paragraph of English text from wikipedia. (hint use strsplit() to split a paragraph into individual letters).
+
+```{r}
+
+```
+
+
+
+
+
