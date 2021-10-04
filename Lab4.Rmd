@@ -11,13 +11,159 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(rvest)
+library(distr)
 ```
 
 1) Estimate the letter occurrence probabilities of all 26 letters in English by measuring a paragraph of English text from wikipedia. (hint use strsplit() to split a paragraph into individual letters).
 
 ```{r}
+paragraph <- "Squid Game is a South Korean survival drama television series streaming on Netflix. It was written and directed by Hwang Dong-hyuk, and stars Lee Jung-jae, Park Hae-soo, O Yeong-su, Wi Ha-joon, Jung Ho-yeon, Heo Sung-tae, Anupam Tripathi, and Kim Joo-ryoung. The series was released worldwide on September 17, 2021, and distributed by Netflix. The show received overwhelmingly positive reviews, and within a week was one of Netflix's most watched programs in several regional markets."
+
+paragraph <- gsub(" |,|'|-|[0-9]+|\\.", "", paragraph)
+letters <- unlist(strsplit(tolower(paragraph), ""))
+table_ <- table(letters)
+
+letters_data <- as_tibble(table_) 
+
+letters_data$prob <- letters_data$n / sum(letters_data$n)
+
+letters_data
+
+ggplot(data = letters_data, mapping = aes(x = letters, y = n)) +
+  geom_col() +
+  geom_text(mapping = aes(label = sprintf("%1.0f", n)), vjust = -0.5)
+
+ggplot(data = letters_data, mapping = aes(x = letters, y = prob * 100)) +
+  geom_col() +
+  geom_text(mapping = aes(label = sprintf("%1.0f%%", prob * 100)), vjust = -0.5) +
+  labs(y = "prob of n")
+```
+
+2) Generate “random” strings of letters that are sampled from a distribution where letter occurrence probability is the same as natural English. Use the probabilities for each letter from this wikipedia article, or use your own estimates from the previous question.
+
+```{r}
+webpage <- read_html("https://en.wikipedia.org/wiki/Letter_frequency")
+tbls_ls <- webpage %>%
+        html_nodes("table") %>%
+        html_table(fill = TRUE)
+prob_data <- as_tibble(data.frame(tbls_ls[4]))
+
+prob_data <- prob_data[c(1:26),]
+
+prob_data <- prob_data %>%
+  select(c(1, 2)) %>%
+  rename(letters = Letter) %>%
+  rename(prob = English) %>%
+  transform(prob = gsub("%", "", prob)) %>%
+  transform(prob = as.numeric(prob) / 100) %>%
+  mutate(letter_index = 1:length(letters))
+
+# Using the distr package to create a discrete distribution from the letter probabilities tibble.
+
+letter_dist <- DiscreteDistribution(supp = prob_data$letter_index, prob = prob_data$prob)
+
+#Creating a function that samples from the discrete distribution of the probability of letter occurance from above.
+
+random_strings <- function(number_of_strings, number_of_characters) {
+  random_strings_vector <- c()
+  for(i in 1:number_of_strings) {
+    my_letters_index <- c(r(letter_dist)(number_of_characters))
+    random_strings_vector[i] <- paste(c(prob_data$letters[my_letters_index]), collapse = "")
+  }
+  
+  return(random_strings_vector)
+}
+
+prob_data
+
+ggplot(data = prob_data, mapping = aes(x = letters, y = prob * 100)) +
+  geom_col(width = 0.5) +
+  geom_text(mapping = aes(label = sprintf("%1.1f%%", prob * 100)), vjust = -0.5) +
+  labs(y = "prob")
+
+random_strings(20, 5)
 
 ```
+
+3) Generate a random walk of 10,000 steps. In a random walk, you are simulating the process of randomly taking a step up or down, as if you are on an infinite staircase. At each step you flip a coin. If you get heads you go up one step, if you get tails you go down one step. Start on step 0, then simulate a random walk for 10,000 steps. Your vector should preserve the step number for each step. For example, if the the first three steps were all heads, then the vector would begin with 0,1,2,3, which indicates a single step up each time. Plot the first 1,000 steps.
+
+```{r}
+coin_flips <- c()
+coin_random_walk <- function(number_of_steps) {
+  coin_flips <- c(0)
+  coin_ <- c()
+  coin_vector <- c(0)
+  coin_flip_number <- c(0)
+  for(i in 1:number_of_steps) {
+    coin_ <- sample(c(-1, 1), 1)
+    coin_vector[i+1] <- coin_
+    coin_flips[i+1] <- coin_flips[i] + coin_
+    coin_flip_number[i+1] <- i
+  }
+  
+  walk_data <- tibble(coin_flip_number = coin_flip_number, coin_flip = coin_vector, coin_flip_value = coin_flips)
+  # walk_data$coin_flip_number <- 0:length(walk_data$coin_flip_value)
+  
+  return(walk_data)
+}
+
+walk_data <- coin_random_walk(10000)
+
+walk_data
+
+ggplot(data = walk_data, mapping = aes(x = coin_flip_number, y = coin_flip_value)) +
+  geom_line() +
+  labs(x = "Coin Flip Number", y = "Coin Flip Value")
+```
+
+4) What was the most positive and most negative step reached out of 10,000?
+
+```{r}
+min(walk_data$coin_flip_value)
+max(walk_data$coin_flip_value)
+```
+
+5) What was the longest run of steps where all steps were positive numbers. For example, in the sequence: 1,2,3,2,1,0,-1,-2,-1,-2,-1,0,1,2,3; the answer is 5 because the first five values were all positive, and this was the longest sequence of positive values.
+
+```{r}
+positive_streak <- c()
+negative_streak <- c()
+
+positive_counter <- 0
+negative_counter <- 0
+
+streak_counter <- function(index, sequence, evaluator) {
+  for(i in 2:length(index)) {
+    if(evaluator[i] > 0) {
+      positive_counter <- positive_counter + evaluator[i]
+    }
+    else if(evaluator[i] < 0) {
+      negative_counter <- negative_counter - evaluator[i]
+    }
+    if(sequence[i] < sequence[i - 1] | is.na(index[i + 1]) == TRUE) {
+      positive_streak <- c(positive_streak, positive_counter)
+      positive_counter <- 0
+    }
+    else if(sequence[i] > sequence[i - 1] | is.na(index[i + 1]) == TRUE) {
+      negative_streak <- c(negative_streak, negative_counter)
+      negative_counter <- 0
+    }
+  }
+  return(c(max(positive_streak), max(negative_streak)))
+}
+
+streaks <- streak_counter(walk_data$coin_flip_number, walk_data$coin_flip_value, walk_data$coin_flip)
+
+print(paste("Longest positive streak: ", streaks[1]))
+print(paste("Longest negative streak: ", streaks[2]))
+```
+
+I was able to solve all problems without help except for minor Stack Overflow assistance on some syntax.
+
+
+
+
 
 
 
