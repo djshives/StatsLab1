@@ -63,7 +63,7 @@ prob_data <- prob_data %>%
 
 letter_dist <- DiscreteDistribution(supp = prob_data$letter_index, prob = prob_data$prob)
 
-#Creating a function that samples from the discrete distribution of the probability of letter occurance from above.
+#Creating a function that samples from the discrete distribution of the probability of letter occurrence from above.
 
 random_strings <- function(number_of_strings, number_of_characters) {
   random_strings_vector <- c()
