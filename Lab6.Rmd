@@ -1,0 +1,98 @@
+---
+title: "Lab6"
+author: "Drew Shives"
+date: "10/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) Trust but verify. We trust that the rnorm() will generate random deviates in accordance with the definition of the normal distribution. For example, we learned in this lab, that a normal distribution with mean = 0, and sd =1 , should only produce values larger than 2.5 with a specific small probability, that is P(x>2.5) = 0.006209665. Verify this is approximately the case by randomly sampling 1 million numbers from this distribution, and calculate what proportion of numbers are larger than 2.5.
+
+```{r}
+true_probability <- pnorm(2.5, mean = 0, sd = 1, lower.tail = FALSE)
+
+samples <- rnorm(1000000, mean = 0, sd = 1)
+
+selection <- samples[samples > 2.5]
+
+true_probability
+length(selection)/length(samples)
+```
+
+2) If performance on a standardized test was known to follow a normal distribution with mean 100 and standard deviation 10, and 10,000 people took the test, how many people would be expected to achieve a score higher than 3 standard deviations from the mean?
+
+```{r}
+three_std_dev <- pnorm(130, mean = 100, sd = 10, lower.tail = FALSE)
+
+10000 * three_std_dev
+```
+
+3) You randomly sample 25 numbers from a normal distribution with mean = 10 and standard deviation = 20. You obtain a sample mean of 12. You want to know the probability that you could have received a sample mean of 12 or larger.
+
+Create a sampling distribution of the mean for this scenario with at least 10,000 sample means. Then, calculate the proportion of sample means that are 12 or larger.
+
+```{r}
+norm_trial_generator <- function(num_trials, num_samples, mean, sd) {
+  vector_ <- c()
+  vector_ <- t(replicate(num_trials, rnorm(num_samples, mean = mean, sd = sd)))
+  tibble_ <- as_tibble(vector_)
+  tibble_ <- tibble_ %>%
+    mutate(trial_var = apply(tibble_, 1, var), .before = "V1") %>%
+    mutate(trial_sd = sqrt(trial_var), .before = "V1") %>%
+    mutate(trial_mean = rowMeans(select(tibble_, c(V1:gsub(" ", "", paste("V", num_samples))))), .before = "trial_var")
+  tibble_ <- add_column(.data = tibble_, trial = 1:nrow(tibble_), .before = "trial_mean")
+  return(tibble_)
+}
+
+data_ <- norm_trial_generator(10000, 25, 10, 20)
+
+greater_than_twelve <- data_ %>%
+  filter(trial_mean >= 12)
+
+length(greater_than_twelve$trial) / 10000
+```
+
+4) You randomly sample 100 numbers from a normal distribution with mean = 10 and standard deviation = 20. You obtain a sample mean of 12. You want to know the probability that you could have received a sample mean of 12 or larger.
+
+Create a sampling distribution of the mean for this scenario with at least 10,000 sample means. Then, calculate the proportion of sample means that are 12 or larger. Is the proportion different from question 3, why?.
+
+```{r}
+data2_ <- norm_trial_generator(10000, 100, 10, 20)
+
+greater_than_twelve2 <- data2_ %>%
+  filter(trial_mean >= 12)
+
+length(greater_than_twelve2$trial) / 10000
+```
+
+```{r}
+ggplot(data = data_, mapping = aes(x = trial_mean)) +
+  geom_histogram(fill = "red", alpha = 0.5) +
+  geom_histogram(data = data2_, fill = "blue", alpha = 0.5)
+```
+
+
+The proportion of sample means that are greater than or equal to 12 is smaller than from question 3. This is because the mean of each trial moves towards the mean of the population as the sample size per trial increases. 
+
+5) You randomly sample 25 numbers from a normal distribution with mean = 10 and standard deviation = 20. You obtain a sample standard deviation of 15. You want to know the probability that you could have received a sample standard deviation of 15 or less.
+
+Create a sampling distribution of standard deviations for this scenario with at least 10,000 sample standard deviations. Then, calculate the proportion of sample standard deviations that are 15 or less.
+
+```{r}
+data3_ <- norm_trial_generator(10000, 25, 10, 20)
+
+less_than_fifteen <- data3_ %>%
+  filter(trial_sd <= 15)
+
+length(less_than_fifteen$trial) / 10000
+```
+
+I was able to complete the assignment with minimal assistance from Stack Overflow for some syntax.
+
+
+
+
+

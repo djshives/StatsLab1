@@ -139,6 +139,40 @@ sum((x - 0) ^ 4) / (length(x) * 4.049691 ^ 4) - 3
 0.5 * 0.5 * 0.5
 ```
 
+```{r}
+sum((1/8 * -10), (3/8 * -20), (3/8 * 10), (1/8 * 40))
+```
+
+```{r}
+for(i in 10000) {
+  print(i)
+}
+```
+
+```{r}
+webpage <- read_html("https://www.state.gov/foreign-language-training/")
+tbls_ls <- webpage %>%
+        html_nodes("table") %>%
+        html_table(fill = TRUE)
+
+language_data <- as_tibble(data.frame(tbls_ls[4])) %>%
+  gather(column, language) %>%
+  select(language)
+
+language_vector <- c(language_data, recursive = TRUE) %>%
+  unname()
+
+cat(paste(language_vector, collapse=", "))
+```
+
+```{r}
+factorial(8)/(factorial(5) * factorial(3))
+```
+
+```{r}
+
+```
+
 
 
 
