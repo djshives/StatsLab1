@@ -170,8 +170,15 @@ factorial(8)/(factorial(5) * factorial(3))
 ```
 
 ```{r}
-
+factorial(15) / (factorial(3) * factorial(12))
+ncol(combn(15, 3))
 ```
+
+```{r}
+factorial(100)
+```
+
+
 
 
 
