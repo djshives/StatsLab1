@@ -1,0 +1,156 @@
+---
+title: "Lab6"
+author: "Drew Shives"
+date: "10/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+data <- read_csv("https://raw.githubusercontent.com/CrumpLab/statisticsLab/master/data/SchroederEpley2015data.csv")
+
+data <- as_tibble(data)
+```
+
+```{r}
+rand_test <- setRefClass("test_",
+                     fields = list(),
+                     methods = list(
+                       means = function(seed, data, permutations) {
+                         set.seed(seed)
+                         pos_dif <- c()
+                         col_names <- setNames(rep(0, 3), c("sample_group", "CONDITION", "mean"))
+                         grouped_data <- bind_rows(col_names)[0, ]
+                         for(i in 1:permutations) {
+                           grouped_ <- data %>%
+                             mutate(Intellect_Rating = sample(Intellect_Rating)) %>%
+                             group_by(CONDITION) %>%
+                             summarise(mean = mean(Intellect_Rating))
+                           grouped_data <- grouped_data %>%
+                             add_row(sample_group = i, CONDITION = grouped_$CONDITION, mean = grouped_$mean)
+                         }
+                         grouped_data
+                       },
+                       
+                       diff_means = function(seed, data, permutations) {
+                         set.seed(seed)
+                         pos_dif <- c()
+                         col_names <- setNames(rep(0, 3), c("sample_group", "CONDITION", "mean"))
+                         grouped_data <- bind_rows(col_names)[0, ]
+                         for(i in 1:permutations) {
+                           grouped_ <- data %>%
+                             mutate(Intellect_Rating = sample(Intellect_Rating)) %>%
+                             group_by(CONDITION) %>%
+                             summarise(mean = mean(Intellect_Rating))
+                           pos_dif[i] <- grouped_[grouped_$CONDITION == 1,]$mean - grouped_[grouped_$CONDITION == 0,]$mean
+                         }
+                         pos_dif
+                       },
+                       
+                       hist_means = function(seed, data, permutations) {
+                         set.seed(seed)
+                         pos_dif <- c()
+                         col_names <- setNames(rep(0, 3), c("sample_group", "CONDITION", "mean"))
+                         grouped_data <- bind_rows(col_names)[0, ]
+                         for(i in 1:permutations) {
+                           grouped_ <- data %>%
+                             mutate(Intellect_Rating = sample(Intellect_Rating)) %>%
+                             group_by(CONDITION) %>%
+                             summarise(mean = mean(Intellect_Rating))
+                           grouped_data <- grouped_data %>%
+                             add_row(sample_group = i, CONDITION = grouped_$CONDITION, mean = grouped_$mean)
+                         }
+                         grouped_data_diff <- grouped_data %>%
+                           group_by(sample_group) %>%
+                           summarise(diff = mean[CONDITION == 1] - mean[CONDITION == 0])
+                         ggplot(data = grouped_data_diff) +
+                           geom_histogram(mapping = aes(x = diff))
+                       },
+                       
+                       prob_mean_diff = function(seed, data, permutations, prob_mean_diff) {
+                         set.seed(seed)
+                         pos_dif <- c()
+                         col_names <- setNames(rep(0, 3), c("sample_group", "CONDITION", "mean"))
+                         grouped_data <- bind_rows(col_names)[0, ]
+                         for(i in 1:permutations) {
+                           grouped_ <- data %>%
+                             mutate(Intellect_Rating = sample(Intellect_Rating)) %>%
+                             group_by(CONDITION) %>%
+                             summarise(mean = mean(Intellect_Rating))
+                           pos_dif[i] <- grouped_[grouped_$CONDITION == 1,]$mean - grouped_[grouped_$CONDITION == 0,]$mean
+                         }
+                         length(pos_dif[pos_dif >= prob_mean_diff]) / length(pos_dif)
+                       }
+                       
+                       )
+                     )
+```
+
+```{r}
+rand_test_output <- rand_test()
+
+means <- rand_test_output$means(1, data, 1000)
+
+diff_means <- rand_test_output$diff_means(1, data, 1000)
+
+diff_hist <- rand_test_output$hist_means(1, data, 1000)
+
+prob_mean_diff <- rand_test_output$prob_mean_diff(1, data, 1000, 2)
+
+
+means
+
+diff_means
+
+diff_hist
+
+prob_mean_diff
+
+
+```
+
+I decided to try and write a class object with a bunch of functions for the object. I split the class (rand_test()) into four methods:
+
+(One note — set the seed as the same for each method to share the sampling data across each.)
+
+- rand_test_output$means(seed, data, permutations)
+
+Produces a tibble with all sample groups, conditions, and means for each condition in each sample group.
+
+- rand_test_output$diff_means(seed, data, permutations)
+
+Produces a vector of difference in sample means between conditions per sample group.
+
+- rand_test_output$hist_means(seed, data, permutations)
+
+Produces a histogram of all of the difference in sample means.
+
+- rand_test_output$prob_mean_diff(seed, data, permutations, observered_mean_difference)
+
+Produces the probability/odds of obtaining the mean difference or larger set by the parameter "observed_mean_difference".
+
+Given that we randomly sampled permutations of the data 1000 times and received a result of 0.002 for the probability of obtaining a mean difference of 2 (what was observed), it is likely that this difference was not produced by chance. That being said, however, considering that the sample size overall for the experiment is n = 39, it is still possible that the observed outcome could have been by chance.
+
+If the observed mean difference was 0.5, I would believe strongly that the result was produced by chance rather than the experimental manipulation.
+
+I was able to complete this lab with minimal assistance outside of Stack Overflow for some syntax questions (especially as relates to creating a class object and subsequent methods in R).
+
+
+
+
+
+
+
+
+
+
+
+
+

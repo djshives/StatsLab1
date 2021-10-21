@@ -178,8 +178,48 @@ ncol(combn(15, 3))
 factorial(100)
 ```
 
+```{r}
+factorial(10) / (factorial(7) * factorial(3))
+```
 
+```{r}
+binom.test(7, 10, 0.5, alternative = "greater")
 
+dbinom(7, 10, 0.5) + dbinom(8, 10, 0.5) + dbinom(9, 10, 0.5) + dbinom(10, 10, 0.5)
+
+pbinom(3, 10, 0.5, lower.tail = TRUE)
+
+(ncol(combn(10, 7)) * (0.5 ^ 7) * (0.5 ^ 3)) + (ncol(combn(10, 8)) * (0.5 ^ 8) * (0.5 ^ 2)) + (ncol(combn(10, 9)) * (0.5 ^ 9) * (0.5 ^ 1)) + (ncol(combn(10, 10)) * (0.5 ^ 10) * (0.5 ^ 0))
+```
+
+```{r}
+test_ <- array()
+for(i in c(0.05, 0.25, 0.50, 0.75, 0.85, 0.90, 0.95, 0.99)) {
+    test_ <-
+      append(test_, 
+        pwr.p.test(h = ES.h(p1 = 0.55, p2 = 0.5),
+               sig.level = 0.01,
+               power = i,
+               alternative = "greater")
+      )
+}
+```
+
+```{r}
+typeof(test_)
+```
+
+```{r}
+test_ <-
+  pwr.p.test(h = ES.h(p1 = 0.55, p2 = 0.5),
+             sig.level = 0.01,
+             power = .95,
+             alternative = "greater")
+```
+
+```{r}
+plot(test_)
+```
 
 
 
