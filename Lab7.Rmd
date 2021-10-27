@@ -1,0 +1,70 @@
+---
+title: "Lab7"
+author: "Drew Shives"
+date: "10/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(foreach)
+```
+
+1) A test-taker answered 50 true/false questions and received a score of 60% correct. Report the results of a binomial test and explain whether you think the test-score could be produced by the test-taker randomly guessing on each question.
+
+```{r}
+binom.test(30, 50, p = 0.5, alternative = "greater")
+```
+
+It is unlikely that that the test-score could be produced by the test-taker, but not impossible. The p-value of the one-tailed binomial test is 0.1013, indicating that the possibility of this event or an event more extreme happening is roughly 10%. Depending on the level of sensitivity the evaluator has towards Type I errors, this may or may not be acceptable.
+
+2) An examiner wants to make a TRUE/FALSE test, but is still deciding how many questions they will include. They want to make sure that it would be very difficult to simply randomly guess and be able to score any higher than 55% percent. How many questions would the examiner need to use to be confident that scores of 55% or higher were not produced by chance?
+
+```{r}
+
+test_ <- foreach(i = c(55, 60, 75, 100, 150, 200, 300, 400, 500), j = c(100, 110, 135, 180, 270, 360, 545, 727, 900)) %do% {
+  binom.test(i, j, 0.5, alternative = "greater")
+}
+
+test_
+
+```
+
+3) A test has 5 TRUE/FALSE questions (each with one right answer) and 5 multiple choice questions with four choices each (each with only one right answer).
+
+- Create a sampling distribution or probability distribution to illustrate how a random chance process could perform on this test.
+
+```{r}
+question_probs <- c(0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25)
+
+sim_test <- replicate(10000, rbinom(n = rep(1:10), size = 1, prob = question_probs))
+
+sim_scores <- colSums(sim_test)/10
+
+hist(sim_scores)
+```
+
+- What is the probability that randomly guessing on each question could allow a person to receive 75% or greater on this test?
+
+```{r}
+length(sim_scores[sim_scores >= 0.75]) / 10000
+```
+
+I was able to complete the assignment with minimal assistance.
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -179,7 +179,7 @@ factorial(100)
 ```
 
 ```{r}
-factorial(10) / (factorial(7) * factorial(3))
+factorial(20) / (factorial(19) * factorial(1))
 ```
 
 ```{r}
