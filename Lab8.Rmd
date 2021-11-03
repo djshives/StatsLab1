@@ -1,0 +1,89 @@
+---
+title: "Lab8"
+author: "Drew Shives"
+date: "11/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) Write a function to convert a vector of raw-scores into z-scores. The function should have inputs for the vector, the mean and sd of the normal distribution, and should return a vector of zscores. Also, demonstrate that the function works correctly. How you make the demonstration is up to you.
+Advanced: Have an option so that the function will convert the raw scores to zscores in one of two ways:
+using user provided mean and standard deviation
+using the calculated mean and standard deviation from the raw scores
+
+```{r}
+zscores_user <- function(raw_scores, mean, sd) {
+  z_ <- c()
+  for(i in 1:length(raw_scores)) {
+    z_[i] <- (raw_scores[i] - mean) / sd
+  }
+  return(z_)
+}
+
+zscores_calc <- function(raw_scores) {
+  z_ <- c()
+  for(i in 1:length(raw_scores)) {
+    z_[i] <- (raw_scores[i] - mean(raw_scores)) / sd(raw_scores)
+  }
+  return(z_)
+}
+```
+
+I created two functions:
+- zscores_user: user inputs the mean and standard deviation
+- zscores_calc: mean and standard deviation are calculated from the vector of raw scores
+
+```{r}
+raw_scores <- rnorm(10)
+
+zscores1 <- zscores_user(raw_scores, mean(raw_scores), sd(raw_scores))
+
+zscores2 <- zscores_calc(raw_scores)
+
+zscores1
+zscores2
+```
+
+2) Base R does not have a function for a z-test. Write a function to accomplish a one-sample z-test. Remember, a one-sample z test is used to compare the probability of obtaining the sample mean (or larger or smaller) if it came from a known normal distribution.
+
+```{r}
+z.test <- function(sample_mean, mu, sigma, n, two.tailed = FALSE) {
+  std_err <- sigma / sqrt(n)
+  p_ <- pnorm(sample_mean, mu, std_err, lower.tail = FALSE)
+  
+  if(two.tailed == TRUE) p_ <- p_ * 2
+  return(p_)
+}
+```
+
+3) Use your z-test function to conduct a test of the following. A sample of 25 scores is taken. The mean of the sample is 50. The sample is assumed to have been taken from a normal distribution with mean 40 and standard deviation 7. Report a one-tailed z-test, examining the probability of obtaining a sample of greater than 50 in this situation. Report the results, and give a brief sentence explaining the result and the inference you make.
+
+```{r}
+ztest <- z.test(50, 40, 7, 25)
+
+ztest
+```
+
+With a p-value of ~4.57e-13 (well below a 0.05 or 0.01 level of significance), we can reject the null hypothesis that a sample of 50 or greater occurred by chance.
+
+I was able to complete this lab with no assistance.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

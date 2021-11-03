@@ -221,6 +221,112 @@ test_ <-
 plot(test_)
 ```
 
+```{r}
+binom.test(5, 15, 0.125, alternative = "greater")
+
+ncol(combn(15, 5)) * (0.125 ^ 15) * (0.875 ^ 10)
+```
+
+```{r}
+ncol(combn(10, 2))
+
+```
+
+```{r}
+factorial(10) / factorial(7)
+```
+
+```{r}
+factorial(10) / (factorial(7) * factorial(3))
+```
+
+```{r}
+mean(rbinom(100, size = 1, prob = 0.5))
+```
+
+```{r}
+binom.test(65, 100, 0.5, alternative = "greater")
+
+pbinom(35, 100, 0.5, lower.tail = TRUE)
+
+
+```
+
+```{r}
+binom.test(2, 10, (1/6), alternative = "less")
+
+pbinom(2, 10, (1/6), lower.tail = TRUE)
+
+(ncol(combn(10, 0)) * ((1/6) ^ 0) * ((5/6) ^ 10)) + (ncol(combn(10, 1)) * ((1/6) ^ 1) * ((5/6) ^ 9)) + (ncol(combn(10, 2)) * ((1/6) ^ 2) * ((5/6) ^ 8))
+
+```
+
+```{r}
+binom.test(7, 10, 0.5, alternative = "greater")
+
+dbinom(7, 10, 0.5) + dbinom(8, 10, 0.5) + dbinom(9, 10, 0.5) + dbinom(10, 10, 0.5)
+
+pbinom(3, 10, 0.5, lower.tail = TRUE)
+
+(ncol(combn(10, 7)) * (0.5 ^ 7) * (0.5 ^ 3)) + (ncol(combn(10, 8)) * (0.5 ^ 8) * (0.5 ^ 2)) + (ncol(combn(10, 9)) * (0.5 ^ 9) * (0.5 ^ 1)) + (ncol(combn(10, 10)) * (0.5 ^ 10) * (0.5 ^ 0))
+```
+
+```{r}
+binom.test(5, 6, 0.25, alternative = "greater")
+
+(ncol(combn(6, 5)) * (0.25 ^ 5) * (0.75 ^ 1)) + (ncol(combn(6, 6)) * (0.25 ^ 6) * (0.75 ^ 0)) 
+```
+
+```{r}
+pnorm(75, mean = 74, sd = 1, lower.tail = FALSE)
+```
+
+```{r}
+factorial(6) / factorial(3)
+```
+
+```{r}
+factorial(6) / (factorial(3) * factorial(3))
+
+ncol(combn(6, 3))
+```
+
+```{r}
+1 - ((ncol(combn(8, 6)) * (0.5 ^ 6) * (0.5 ^ 2)) + (ncol(combn(8, 7)) * (0.5 ^ 7) * (0.5 ^ 1)) + (ncol(combn(8, 8)) * (0.5 ^ 8) * (0.5 ^ 0)))
+```
+
+```{r}
+qnorm(0.7)
+```
+
+```{r}
+(ncol(combn(8, 5)) * (0.7 ^ 5) * (0.3 ^ 3)) + (ncol(combn(8, 4)) * (0.7 ^ 4) * (0.3 ^ 4)) + (ncol(combn(8, 3)) * (0.7 ^ 3) * (0.3 ^ 5)) + (ncol(combn(8, 2)) * (0.7 ^ 2) * (0.3 ^ 6)) + (ncol(combn(8, 1)) * (0.7 ^ 1) * (0.3 ^ 7)) + (ncol(combn(8, 0)) * (0.7 ^ 0) * (0.3 ^ 8))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
