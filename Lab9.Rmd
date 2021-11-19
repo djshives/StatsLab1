@@ -1,0 +1,108 @@
+---
+title: "Lab9"
+author: "Drew Shives"
+date: "11/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(rlang)
+```
+
+```{r}
+df <- read_excel("/Users/drewshives/Documents/GitHub/StatsLab1/datasets/When_not_choosing_leads_to_not liking_Data.xlsx")
+```
+
+```{r}
+unique(df$ExperimentNumber)
+```
+
+```{r}
+df1 <- df %>%
+  filter(ExperimentNumber == 1)
+```
+
+```{r}
+df1
+```
+
+```{r}
+columns = c("ExperimentNumber", "ExperimentParticipantNumber", "AgeMonths", "Gender", "ToyA", "ToyB", "ToyC", "InfantChoiceTest", "InfantChoseC")
+
+colnames(df1) <- columns
+
+```
+
+```{r}
+df1 %>% 
+  count(InfantChoseC)
+```
+
+```{r}
+(binomial <- binom.test(16, 21, 0.5, alternative = "two.sided"))
+```
+
+```{r}
+gender_df1 <- df1 %>%
+  select(Gender, InfantChoseC) %>%
+  group_by(Gender, InfantChoseC) %>%
+  summarize(counts = n()) %>%
+  pivot_wider(names_from = c(Gender), values_from = counts)
+```
+
+```{r}
+(gender_chi_sq <- chisq.test(gender_df1[, 2:3]))
+```
+
+```{r}
+uncorrected_gender_chi_sq <- sum((gender_chi_sq$observed-gender_chi_sq$expected)^2/gender_chi_sq$expected)
+
+(gender_chi_sq_unc <- pchisq(uncorrected_gender_chi_sq,1,lower.tail = FALSE))
+```
+
+In the critical test trial, 16 of 21  infants (76.19%) chose the new block. This percentage was significantly different than chance — determined by using the two-tailed binomial test (p = `r round(binomial$p.value, digits = 2)`, 95% confidence interval = [52.83%, 91.78%], relative risk ratio = 1.52). No significant effect of gender on infants' choices was indicated by a chi-square test of independence ($\chi^2$ N = 21 = `r round(uncorrected_gender_chi_sq, digits = 2)`, p = `r round(gender_chi_sq_unc, digits = 2)`).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
