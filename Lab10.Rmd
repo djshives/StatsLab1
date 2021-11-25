@@ -1,0 +1,179 @@
+---
+title             : "Lab10 Re-Analysis"
+
+author: 
+  - name          : "Drew Shives"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Postal address"
+    email         : "my@email.com"
+    role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+      - Conceptualization
+      - Writing - Original Draft Preparation
+      - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "The Graduate Center, CUNY"
+    
+header-includes:
+  - \raggedbottom
+
+output            : papaja::apa6_pdf
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+```{r, include = FALSE}
+library(tidyverse)
+library(pwr)
+```
+
+```{r, include = FALSE}
+df <- read_csv("https://raw.githubusercontent.com/CrumpLab/statisticsLab/master/data/stroop_stand.csv")
+```
+
+```{r, include = FALSE}
+head(df)
+```
+
+```{r, include = FALSE}
+colMeans(df)
+```
+
+```{r, include = FALSE}
+RTs <- c(as.numeric(unlist(df[,1])),
+         as.numeric(unlist(df[,2])),
+         as.numeric(unlist(df[,3])),
+         as.numeric(unlist(df[,4]))
+         )
+
+Congruency <- rep(rep(c("Congruent","Incongruent"),each=50),2)
+Posture <- rep(c("Stand","Sit"),each=100)
+Subject <- rep(1:50,4)
+
+df_long <- data.frame(Subject,Congruency,Posture,RTs)
+```
+
+```{r, include = FALSE}
+df_long
+```
+
+```{r, include = FALSE}
+con_stand <- df_long %>%
+  filter(Congruency == "Congruent", Posture == "Stand")
+
+incon_stand <- df_long %>%
+  filter(Congruency == "Incongruent", Posture == "Stand")
+
+con_sit <- df_long %>%
+  filter(Congruency == "Congruent", Posture == "Sit")
+
+incon_sit <- df_long %>%
+  filter(Congruency == "Incongruent", Posture == "Sit")
+
+mean(con_stand$RTs) - mean(incon_stand$RTs)
+
+mean(con_sit$RTs) - mean(incon_sit$RTs)
+```
+
+```{r, include = FALSE}
+stand_t <- t.test(con_stand$RTs, incon_stand$RTs, paired = TRUE)
+```
+
+```{r, include = FALSE}
+sit_t <- t.test(con_sit$RTs, incon_sit$RTs, paired = TRUE)
+```
+
+```{r, include = FALSE}
+sit_diff <- con_stand$RTs - incon_stand$RTs
+
+stand_diff <- con_sit$RTs - incon_sit$RTs
+```
+
+```{r, include = FALSE}
+sit_stand_t <- t.test(sit_diff, stand_diff, paired = TRUE)
+
+sit_stand_t
+```
+
+```{r, include = FALSE}
+grouped_ <- df_long %>%
+  group_by(Congruency, Posture) %>%
+  summarise(mean = mean(RTs), 
+            SEM = sd(RTs) / sqrt(length(RTs)))
+```
+
+```{r, include = FALSE}
+grouped_hist <- ggplot(data = grouped_, mapping = aes(x = Posture, y = mean, group = Congruency, fill = Congruency)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(mapping = aes(ymin = mean - SEM, ymax = mean + SEM),
+                position = position_dodge(width = 0.9),
+                width = 0.2) +
+  theme_classic() +
+  coord_cartesian(ylim = c(700, 1000))
+
+```
+
+```{r, include = FALSE}
+effect_sizes <- seq(.1,2,.1)
+
+power <- sapply(effect_sizes, FUN = function(x) {
+  pwr.t.test(n=50, 
+             d=x, 
+             sig.level=.05, 
+             type="one.sample", 
+             alternative="two.sided"
+             )$power
+  })
+
+plot_df <- data.frame(effect_sizes,power)
+
+power_line <- ggplot(plot_df, aes(x=effect_sizes, y=power))+  
+  geom_point()+  
+  geom_line()
+```
+
+## Data analysis
+
+We used `r cite_r("r-references.bib")` for all our analyses.
+
+First, I was able to replicate the Fig. 1 from the original paper.
+
+```{r, echo = FALSE}
+knitr::kable(grouped_)
+plot(grouped_hist)
+```
+
+Second, I was able to replicate the Stroop effects in both the sitting (`r apa_print(sit_t)$full_result`) and standing (`r apa_print(stand_t)$full_result`) conditions.
+
+The authors found that the Stroop effect shrunk when participants were standing compared to when they were sitting, F(1, 49) = 8.964, p = .004, np2 = .155. I was able to replicate that results using a paired sample t-test, `r apa_print(sit_stand_t)$full_result`.
+
+Third, I was able to create a power curve analysis for the design
+
+```{r}
+plot(power_line)
+```
+
+
+\newpage
+
+# References
+
+Rosenbaum, D., Mama, Y., & Algom, D. (2017). Stand by Your Stroop: Standing Up Enhances Selective Attention and Cognitive Control. Psychological science, 28(12), 1864-1867.
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup
