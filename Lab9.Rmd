@@ -54,6 +54,8 @@ gender_df1 <- df1 %>%
   group_by(Gender, InfantChoseC) %>%
   summarize(counts = n()) %>%
   pivot_wider(names_from = c(Gender), values_from = counts)
+
+gender_df1
 ```
 
 ```{r}
