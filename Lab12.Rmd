@@ -1,0 +1,31 @@
+---
+title: "Lab12"
+author: "Drew Shives"
+date: "12/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+Y <- c(10,9,8,7,6,5,4,3,2,1,2,3,4,5,6,7,8,9,10)
+X <- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
+
+plot(X, Y)
+
+```
+
+No, linear regression should not be performed on the above data as the relationship is not linear. Points where x < 10 display a perfect negative linear relationship (slope = -1) while points where x > 10 display a perfect positive relationship (slope = 1). Because of this, performing linear regression would result in a line of best fit with a slope of ~0.0. To attain a better estimate, more complex regression methods could be used (e.g., segmented regression, polynomial regression).
+
+
+
+
+
+
+
+
+
+
+
